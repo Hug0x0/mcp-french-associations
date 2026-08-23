@@ -6,6 +6,11 @@ MCP server for French associations: RNA, JOAFE, grants/subventions, and public d
 
 Run the MCP and call `french_associations_get_sources` first to inspect source coverage. This server also exposes domain-specific tools for the topic described above.
 
+- `french_associations_search_datasets`
+- `french_associations_get_dataset`
+- `french_associations_build_search_plan`
+- `french_associations_search_subsidies`
+
 ## Install
 
 ```bash

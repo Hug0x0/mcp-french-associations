@@ -115,6 +115,31 @@ async function searchDataGouv(query: string, pageSize: number) {
   };
 }
 
+async function getDataGouvDataset(dataset: string) {
+  const url = `https://www.data.gouv.fr/api/1/datasets/${encodeURIComponent(dataset)}/`;
+  const data = await fetchJson<Record<string, unknown>>(url);
+  return {
+    id: data.id,
+    slug: data.slug,
+    title: data.title,
+    page: data.page,
+    organization: data.organization && typeof data.organization === 'object'
+      ? (data.organization as Record<string, unknown>).name
+      : undefined,
+    tags: data.tags,
+    resources: Array.isArray(data.resources)
+      ? data.resources.slice(0, 30).map((resource) => ({
+          id: resource.id,
+          title: resource.title,
+          type: resource.type,
+          format: resource.format,
+          url: resource.url,
+          latest: resource.latest,
+        }))
+      : [],
+  };
+}
+
 function normalizePortalUrl(portalUrl: string): string {
   return portalUrl.replace(/\/$/, '');
 }
@@ -166,6 +191,12 @@ server.tool('french_associations_search_datasets', 'Search data.gouv.fr for asso
   page_size: z.number().int().min(1).max(50).default(10),
 }, async ({ query, page_size }) => {
   try { return jsonResult(await searchDataGouv(query, page_size)); } catch (error) { return errorResult(error instanceof Error ? error.message : 'Failed to search association datasets'); }
+});
+
+server.tool('french_associations_get_dataset', 'Inspect a data.gouv.fr association-related dataset by slug or id and list its usable resources.', {
+  dataset: z.string().describe('Dataset slug or id from data.gouv.fr.'),
+}, async ({ dataset }) => {
+  try { return jsonResult(await getDataGouvDataset(dataset)); } catch (error) { return errorResult(error instanceof Error ? error.message : 'Failed to inspect association dataset'); }
 });
 
 server.tool('french_associations_build_search_plan', 'Build a practical public-source search plan for a French association name or RNA id.', {
